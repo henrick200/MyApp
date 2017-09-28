@@ -1,6 +1,8 @@
 package com.example.aluno.myapp;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -15,81 +17,57 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    private Button btn;
+
     private TextView t1;
-    private LocationManager locationManager;
-    private LocationListener locationListener;
+    private EditText edi, ed2;
+    static final int REQUEST_LOCATION =1;
+    LocationManager locationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        getLocation();
 
-        btn = (Button) findViewById(R.id.button);
         t1 = (TextView) findViewById(R.id.tt);
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                t1.setText("\n" + location.getLatitude() + "" + location.getAltitude());
-            }
+        edi = (EditText) findViewById(R.id.t1);
+        ed2 = (EditText) findViewById(R.id.editText2);
+    }
+    void getLocation(){
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+        }else {
+            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if(location != null){
+                double lat = location.getLatitude();
+                double longi = location.getLongitude();
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
+              edi.setText("Latitude: "+ lat);
+                ed2.setText("Longitude: "+ longi);
+            }else{
+                edi.setText("Latitude: "+" Não foi possivel achar");
+                ed2.setText("Longitude: "+ "Não foi possivel achar");
             }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
-            }
-        };
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.INTERNET
-                }, 10);
-                return;
-            }
-        }else{
-            configureButton();
         }
-
-
-
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch(requestCode){
-            case 10:
-                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    configureButton();
-                return;
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissios, @NonNull int[] grantResults){
+        super.onRequestPermissionsResult(requestCode, permissios, grantResults);
+        switch (requestCode){
+            case REQUEST_LOCATION:
+                getLocation();
+                break;
         }
     }
 
-    private void configureButton() {
-
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                locationManager.requestLocationUpdates("gps", 5000, 0, locationListener);
-            }
-        });
-
-    }
 
 
 }
